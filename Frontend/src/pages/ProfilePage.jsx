@@ -17,7 +17,7 @@ const ProfilePage = () => {
         const fetchProfile = async () => {
             setLoading(true);
             try {
-                const response = await api.get('/users/me/');
+                const response = await api.get('/auth/me/');
                 setProfile(response.data);
             } catch (err) {
                 setError("Không thể tải thông tin cá nhân. Vui lòng đảm bảo backend đang chạy và thử lại.");
@@ -47,7 +47,7 @@ const ProfilePage = () => {
         setUpdating(true);
         setUpdateError('');
         try {
-            const response = await api.patch('/users/update-referral-code/', {
+            const response = await api.patch('/auth/update-referral-code/', {
                 new_referral_code: newCode
             });
             setProfile(response.data);

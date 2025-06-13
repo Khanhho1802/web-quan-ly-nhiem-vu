@@ -93,7 +93,7 @@ const BankInfoPage = () => {
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const res = await api.get("/users/me/");
+        const res = await api.get("/auth/me/");
         setProfile(res.data);
         setBankInfo({
           account_holder: res.data.bank_account_holder_name || "",
