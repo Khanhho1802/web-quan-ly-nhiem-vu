@@ -1,16 +1,12 @@
-// Đường dẫn: frontend/src/store/authStore.js
-
 import { create } from 'zustand';
 import api from '../services/api';
 
 export const useAuthStore = create((set, get) => ({
-    // State
     accessToken: localStorage.getItem('accessToken') || null,
     refreshToken: localStorage.getItem('refreshToken') || null,
     user: JSON.parse(localStorage.getItem('user')) || null,
     isInitialized: false,
 
-    // Actions
     setTokens: (access, refresh) => {
         if (access && refresh) {
             localStorage.setItem('accessToken', access);
@@ -34,7 +30,23 @@ export const useAuthStore = create((set, get) => ({
         localStorage.removeItem('user');
         set({ accessToken: null, refreshToken: null, user: null });
     },
-    
+
+    refreshAccessToken: async () => {
+        try {
+            const refresh = get().refreshToken;
+            if (!refresh) throw new Error("No refresh token");
+
+            const response = await api.post('/users/token/refresh/', { refresh });
+            const { access } = response.data;
+            get().setTokens(access, refresh);
+            return access;
+        } catch (error) {
+            console.error("Lỗi khi làm mới token:", error);
+            get().logout();
+            throw error;
+        }
+    },
+
     fetchUser: async () => {
         try {
             const response = await api.get('/users/me/');
@@ -56,27 +68,19 @@ export const useAuthStore = create((set, get) => ({
         set({ isInitialized: true });
     },
 
-    // --- THÊM ACTION LOGIN MỚI ---
     login: async (username, password) => {
         try {
-            // Bước 1: Lấy token từ URL ĐÚNG
             const loginResponse = await api.post('/users/login/', { username, password });
             const { access, refresh } = loginResponse.data;
             get().setTokens(access, refresh);
-
-            // Bước 2: Dùng token mới để lấy thông tin user
             const user = await get().fetchUser();
-            
-            // Trả về thông tin user để LoginPage có thể điều hướng
             return user;
         } catch (error) {
-            // Nếu có lỗi, đăng xuất để dọn dẹp state và localStorage
             get().logout();
-            // Ném lỗi ra ngoài để LoginPage có thể bắt và hiển thị
             throw error;
         }
     },
- 
+
     isAuthenticated: () => {
         return !!get().accessToken;
     }
